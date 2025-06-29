@@ -1,11 +1,11 @@
 const mongoose = require("mongoose")
 const userSchema = require("./User")
-const travelSchema = require("./Travel")
+const itinerarySchema = require("./Itinerary")
 
 const User = mongoose.model("User", userSchema)
-const Travel = mongoose.model("Travel", travelSchema)
+const Itinerary = mongoose.model("Itinerary", itinerarySchema)
 
 module.exports = {
-  Travel,
+  Itinerary,
   User,
 }

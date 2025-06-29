@@ -1,6 +1,6 @@
 const mongoose = require("mongoose")
 const falso = require("@ngneat/falso")
-const { Travel } = require("../models")
+const { Itinerary } = require("../models")
 require("dotenv").config()
 
 mongoose
@@ -12,19 +12,19 @@ mongoose
     console.error("Connection error", e.message)
   })
 
-const createTravels = async () => {
-  let travels = [...Array(10)].map((item, idx) => ({
+const createItinerarys = async () => {
+  let itinerarys = [...Array(10)].map((item, idx) => ({
     title: falso.randCatchPhrase().toString(),
     body: falso.randPhrase().toString(),
     image: `https://picsum.photos/500/500?random=${idx}`,
   }))
 
-  await Travel.deleteMany({})
-  console.log("Creating travels . . .")
-  await Travel.insertMany(travels)
-  console.log("Travel created!")
+  await Itinerary.deleteMany({})
+  console.log("Creating itinerarys . . .")
+  await Itinerary.insertMany(itinerarys)
+  console.log("Itinerary created!")
 
   mongoose.connection.close()
 }
 
-createTravels()
+createItinerarys()

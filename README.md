@@ -1,1 +1,1 @@
-# AI-Travel-Itinerary-Planner-Backend
+# AI-Itinerary-Itinerary-Planner-Backend

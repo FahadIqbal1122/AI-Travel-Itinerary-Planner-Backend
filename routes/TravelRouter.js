@@ -1,25 +1,25 @@
 const router = require("express").Router()
-const controller = require("../controllers/TravelController")
+const controller = require("../controllers/ItineraryController")
 const middleware = require("../middleware")
 
-router.get("/", controller.GetTravels)
+router.get("/", controller.GetItinerarys)
 router.post(
   "/",
   middleware.stripToken,
   middleware.verifyToken,
-  controller.CreateTravel
+  controller.CreateItinerary
 )
 router.put(
-  "/:travel_id",
+  "/:itinerary_id",
   middleware.stripToken,
   middleware.verifyToken,
-  controller.UpdateTravel
+  controller.UpdateItinerary
 )
 router.delete(
-  "/:travel_id",
+  "/:itinerary_id",
   middleware.stripToken,
   middleware.verifyToken,
-  controller.DeleteTravel
+  controller.DeleteItinerary
 )
 
 module.exports = router
