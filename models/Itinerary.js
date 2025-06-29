@@ -1,6 +1,6 @@
 const { Schema } = require("mongoose")
 
-const travelSchema = new Schema(
+const itinerarySchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     destination: { type: String, required: true },
@@ -27,4 +27,4 @@ const travelSchema = new Schema(
   { timestamps: true }
 )
 
-module.exports = travelSchema
+module.exports = itinerarySchema
