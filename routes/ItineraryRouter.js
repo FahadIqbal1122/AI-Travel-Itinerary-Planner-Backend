@@ -2,7 +2,16 @@ const router = require("express").Router()
 const controller = require("../controllers/ItineraryController")
 const middleware = require("../middleware")
 
-router.get("/", controller.GetItinerarys)
+// Add this new route for user-specific itineraries
+router.get(
+  "/user/:userId",
+  middleware.stripToken,
+  middleware.verifyToken,
+  controller.GetUserItineraries
+)
+
+// Existing routes
+router.get("/", controller.GetItineraries)
 router.post(
   "/",
   middleware.stripToken,

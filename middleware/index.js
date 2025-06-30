@@ -21,17 +21,19 @@ const createToken = (payload) => {
 }
 
 const verifyToken = (req, res, next) => {
-  const { token } = res.locals
   try {
-    let payload = jwt.verify(token, APP_SECRET)
-    if (payload) {
-      res.locals.payload = payload
-      return next()
+    const token = req.headers.authorization?.split(" ")[1]
+
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" })
     }
-    res.status(401).send({ status: "Error", msg: "Unauthorized" })
+
+    const decoded = jwt.verify(token, process.env.APP_SECRET)
+    req.user = decoded.user
+    next()
   } catch (error) {
-    console.log(error)
-    res.status(401).send({ status: "Error", msg: "Verify Token Error!" })
+    console.error("Token verification failed:", error)
+    return res.status(401).json({ message: "Invalid token" })
   }
 }
 

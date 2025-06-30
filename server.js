@@ -17,10 +17,10 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 app.use("/auth", AuthRouter)
-app.use("/itinerarys", ItineraryRouter)
+app.use("/itineraries", ItineraryRouter)
 
 app.use("/", (req, res) => {
-  res.send(`Connected!`)
+  res.status(404).json({ message: "Not Found" })
 })
 
 app.listen(PORT, () => {
