@@ -40,6 +40,28 @@ const GetUserItineraries = async (req, res) => {
   }
 }
 
+// Get single itinerary detail (with ownership check)
+const GetItineraryDetail = async (req, res) => {
+  try {
+    const itinerary = await Itinerary.findById(req.params.itinerary_id).lean()
+
+    if (!itinerary) {
+      return res.status(404).json({ message: "Itinerary not found" })
+    }
+
+    if (itinerary.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "Unauthorized - This itinerary doesn't belong to you",
+      })
+    }
+
+    res.json(itinerary)
+  } catch (error) {
+    console.error("Error fetching itinerary detail:", error)
+    res.status(500).json({ message: "Server error" })
+  }
+}
+
 // Create new itinerary
 const CreateItinerary = async (req, res) => {
   try {
@@ -109,6 +131,7 @@ const DeleteItinerary = async (req, res) => {
 module.exports = {
   GetItineraries,
   GetUserItineraries,
+  GetItineraryDetail,
   CreateItinerary,
   UpdateItinerary,
   DeleteItinerary,
