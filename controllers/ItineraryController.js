@@ -1,3 +1,4 @@
+const mongoose = require("mongoose")
 const { Itinerary } = require("../models")
 
 // Get all itineraries (for debugging/admin)
@@ -20,23 +21,54 @@ const GetUserItineraries = async (req, res) => {
       Expires: "0",
     })
 
-    console.log("Fetching itineraries for user:", req.params.userId) // Debug log
+    console.log("Fetching itineraries for user:", req.params.userId)
 
     const itineraries = await Itinerary.find({
       userId: req.params.userId,
-    }).lean() // .lean() for better performance
+    }).lean()
 
-    console.log("Found itineraries:", itineraries) // Debug log
+    console.log("Found itineraries:", itineraries)
 
     if (!itineraries.length) {
-      console.log("No itineraries found for user") // Debug log
-      return res.status(200).json([]) // Return empty array instead of "Connected!"
+      console.log("No itineraries found for user")
+      return res.status(200).json([])
     }
 
-    res.json(itineraries) // Return actual data
+    res.json(itineraries)
   } catch (error) {
     console.error("Error in GetUserItineraries:", error)
     res.status(500).json({ message: "Error fetching itineraries" })
+  }
+}
+
+const GetItineraryById = async (req, res) => {
+  try {
+    // Debug incoming request
+    console.log("Request params:", req.params)
+    console.log("User from token:", req.user)
+
+    // Validate ID format
+    if (!req.params.id || !mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid itinerary ID format",
+        receivedId: req.params.id,
+      })
+    }
+
+    const itinerary = await Itinerary.findById(req.params.id)
+    if (!itinerary) {
+      return res.status(404).json({ message: "Itinerary not found" })
+    }
+
+    // Verify ownership
+    if (itinerary.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized access" })
+    }
+
+    res.json(itinerary)
+  } catch (error) {
+    console.error("Controller error:", error)
+    res.status(500).json({ message: "Server error" })
   }
 }
 
@@ -112,4 +144,5 @@ module.exports = {
   CreateItinerary,
   UpdateItinerary,
   DeleteItinerary,
+  GetItineraryById,
 }
