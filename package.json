@@ -9,6 +9,7 @@
   "author": "Fahad Iqbal",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@ngneat/falso": "^8.0.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",

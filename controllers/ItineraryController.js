@@ -1,4 +1,7 @@
+const { GoogleGenerativeAI } = require("@google/generative-ai")
 const { Itinerary } = require("../models")
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 // Get all itineraries (for debugging/admin)
 const GetItineraries = async (req, res) => {
@@ -128,6 +131,62 @@ const DeleteItinerary = async (req, res) => {
   }
 }
 
+// generate itinerary using Google Generative AI
+const GenerateItinerary = async (req, res) => {
+  try {
+    const { destination, startDate, endDate, preferences } = req.body
+    const userId = req.user._id
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+    const prompt = `You are a travel expert. Generate a ${days}-day travel itinerary for ${destination} starting on ${startDate}.
+The traveler prefers: ${preferences.join(", ")}.
+
+Return ONLY a valid JSON array like this:
+
+[
+  {
+    "day": 1,
+    "title": "Cultural Kickoff",
+    "date": "YYYY-MM-DD",
+    "description": "Explore the city...",
+    "timeSlots": {
+      "morning": "Visit the museum",
+      "afternoon": "Explore old town",
+      "evening": "Dinner at local spot"
+    },
+    "location": "Main City Center"
+  }
+]`
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    const result = await model.generateContent(prompt)
+    const response = result.response.text()
+
+    // Remove ```json block if exists
+    const cleaned = response.replace(/```json|```/g, "").trim()
+
+    const activities = JSON.parse(cleaned)
+
+    const newItinerary = new Itinerary({
+      userId,
+      destination,
+      startDate,
+      endDate,
+      preferences,
+      itineraryText: JSON.stringify(activities),
+      activities,
+    })
+
+    await newItinerary.save()
+
+    res.status(201).json(newItinerary)
+  } catch (err) {
+    console.error("Gemini error:", err.message)
+    res.status(500).json({ error: "Failed to generate AI itinerary." })
+  }
+}
+
 module.exports = {
   GetItineraries,
   GetUserItineraries,
@@ -135,4 +194,5 @@ module.exports = {
   CreateItinerary,
   UpdateItinerary,
   DeleteItinerary,
+  GenerateItinerary,
 }

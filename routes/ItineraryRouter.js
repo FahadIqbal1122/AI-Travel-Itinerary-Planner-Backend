@@ -39,4 +39,11 @@ router.delete(
   controller.DeleteItinerary
 )
 
+router.post(
+  "/generate",
+  middleware.stripToken,
+  middleware.verifyToken,
+  controller.GenerateItinerary
+)
+
 module.exports = router
