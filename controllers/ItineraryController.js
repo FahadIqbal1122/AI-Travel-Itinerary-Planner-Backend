@@ -148,30 +148,40 @@ const GenerateItinerary = async (req, res) => {
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
 
     // AI Generation
-    const prompt = `You are a travel expert. Generate a ${days}-day travel itinerary for ${destination} starting on ${startDate}.
-The traveler prefers: ${preferences.join(", ")}.
+    const prompt = `As a travel expert, create a detailed ${days}-day itinerary for ${destination} starting ${startDate} with these preferences: ${preferences.join(
+      ", "
+    )}.
 
-Return ONLY a valid JSON array like this:
+Requirements:
+1. TRIP DESCRIPTION (50-70 words): Overview highlighting key themes and experiences
+2. For EACH DAY:
+   - Engaging title reflecting the day's focus
+   - DAY DESCRIPTION (1-2 sentences): What makes this day special
+   - 3 time slots (morning/afternoon/evening) with specific activities
+   - Relevant location
 
-[
-  {
-    "day": 1,
-    "title": "Cultural Kickoff",
-    "date": "YYYY-MM-DD",
-    "description": "Explore the city...",
-    "timeSlots": {
-      "morning": "Visit the museum",
-      "afternoon": "Explore old town",
-      "evening": "Dinner at local spot"
-    },
-    "location": "Main City Center"
-  }
-]` // Your existing prompt
+JSON Format:
+{
+  "tripDescription": "...",
+  "days": [
+    {
+      "day": 1,
+      "title": "...",
+      "description": "...",
+      "timeSlots": {
+        "morning": "...",
+        "afternoon": "...",
+        "evening": "..."
+      },
+      "location": "..."
+    }
+  ]
+}`
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
     const result = await model.generateContent(prompt)
     const response = result.response.text()
     const cleaned = response.replace(/```json|```/g, "").trim()
-    const activities = JSON.parse(cleaned)
+    const { tripDescription, days: activities } = JSON.parse(cleaned)
 
     // Return draft or save full itinerary
     if (isDraft) {
@@ -183,6 +193,7 @@ Return ONLY a valid JSON array like this:
           destination,
           startDate,
           endDate,
+          description: tripDescription,
           preferences,
         },
       })
@@ -194,6 +205,7 @@ Return ONLY a valid JSON array like this:
       destination,
       startDate,
       endDate,
+      description: tripDescription,
       preferences,
       activities,
     })

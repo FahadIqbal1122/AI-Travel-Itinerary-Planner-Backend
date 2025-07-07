@@ -8,6 +8,7 @@ const itinerarySchema = new Schema(
     endDate: { type: Date, required: true },
     preferences: [String],
     itineraryText: { type: String },
+    description: { type: String },
     activities: [
       {
         day: Number, // Day 1, 2, 3...
