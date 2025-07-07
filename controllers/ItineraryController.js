@@ -134,11 +134,20 @@ const DeleteItinerary = async (req, res) => {
 // generate itinerary using Google Generative AI
 const GenerateItinerary = async (req, res) => {
   try {
-    const { destination, startDate, endDate, preferences } = req.body
+    const { destination, startDate, endDate, preferences, isDraft } = req.body
     const userId = req.user._id
+
+    // Validate required fields
+    if (!destination || !startDate || !endDate) {
+      return res.status(400).json({ error: "Missing required fields" })
+    }
+
+    // Date calculations
     const start = new Date(startDate)
     const end = new Date(endDate)
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+
+    // AI Generation
     const prompt = `You are a travel expert. Generate a ${days}-day travel itinerary for ${destination} starting on ${startDate}.
 The traveler prefers: ${preferences.join(", ")}.
 
@@ -157,33 +166,70 @@ Return ONLY a valid JSON array like this:
     },
     "location": "Main City Center"
   }
-]`
-
+]` // Your existing prompt
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
     const result = await model.generateContent(prompt)
     const response = result.response.text()
-
-    // Remove ```json block if exists
     const cleaned = response.replace(/```json|```/g, "").trim()
-
     const activities = JSON.parse(cleaned)
 
-    const newItinerary = new Itinerary({
+    // Return draft or save full itinerary
+    if (isDraft) {
+      return res.json({
+        status: "draft",
+        draft: activities,
+        metadata: {
+          userId,
+          destination,
+          startDate,
+          endDate,
+          preferences,
+        },
+      })
+    }
+
+    // Save to database
+    const newItinerary = await Itinerary.create({
       userId,
       destination,
       startDate,
       endDate,
       preferences,
-      itineraryText: JSON.stringify(activities),
       activities,
     })
 
-    await newItinerary.save()
+    res.status(201).json(newItinerary)
+  } catch (err) {
+    console.error("Server error:", err)
+    res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+    })
+  }
+}
+
+const SaveItinerary = async (req, res) => {
+  try {
+    const { destination, startDate, endDate, preferences, activities, userId } =
+      req.body
+
+    const newItinerary = await Itinerary.create({
+      userId,
+      destination,
+      startDate,
+      endDate,
+      preferences,
+      activities,
+      itineraryText: JSON.stringify(activities),
+    })
 
     res.status(201).json(newItinerary)
   } catch (err) {
-    console.error("Gemini error:", err.message)
-    res.status(500).json({ error: "Failed to generate AI itinerary." })
+    console.error("Save error:", err)
+    res.status(500).json({
+      error: "Failed to save itinerary",
+      details: err.message,
+    })
   }
 }
 
@@ -195,4 +241,5 @@ module.exports = {
   UpdateItinerary,
   DeleteItinerary,
   GenerateItinerary,
+  SaveItinerary,
 }

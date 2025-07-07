@@ -46,4 +46,11 @@ router.post(
   controller.GenerateItinerary
 )
 
+router.post(
+  "/itineraries",
+  middleware.stripToken,
+  middleware.verifyToken,
+  controller.SaveItinerary
+)
+
 module.exports = router
