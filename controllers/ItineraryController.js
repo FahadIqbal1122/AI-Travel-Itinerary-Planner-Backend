@@ -81,32 +81,6 @@ const CreateItinerary = async (req, res) => {
   }
 }
 
-// Update itinerary
-const UpdateItinerary = async (req, res) => {
-  try {
-    const existingItinerary = await Itinerary.findById(req.params.itinerary_id)
-
-    if (!existingItinerary) {
-      return res.status(404).json({ message: "Itinerary not found" })
-    }
-
-    if (existingItinerary.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Unauthorized" })
-    }
-
-    const updatedItinerary = await Itinerary.findByIdAndUpdate(
-      req.params.itinerary_id,
-      req.body,
-      { new: true }
-    )
-
-    res.json(updatedItinerary)
-  } catch (error) {
-    console.error("Error updating itinerary:", error)
-    res.status(500).json({ message: "Server error" })
-  }
-}
-
 // Delete itinerary
 const DeleteItinerary = async (req, res) => {
   try {
@@ -245,6 +219,73 @@ const SaveItinerary = async (req, res) => {
   }
 }
 
+// Get Itinerary for edit
+const GetItineraryForEdit = async (req, res) => {
+  try {
+    const itinerary = await Itinerary.findById(req.params.id).lean();
+    
+    if (!itinerary) {
+      return res.status(404).json({ message: "Itinerary not found" });
+    }
+
+    if (itinerary.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    res.json({
+      status: "edit",
+      draft: itinerary.activities,
+      metadata: {
+        _id: itinerary._id,
+        userId: itinerary.userId,
+        destination: itinerary.destination,
+        startDate: itinerary.startDate,
+        endDate: itinerary.endDate,
+        description: itinerary.description,
+        preferences: itinerary.preferences
+      }
+    });
+  } catch (err) {
+    console.error("Edit error:", err);
+    res.status(500).json({
+      error: "Failed to load itinerary for editing",
+      details: err.message,
+    });
+  }
+}
+
+// Update itinerary
+const UpdateItinerary = async (req, res) => {
+  try {
+    const existingItinerary = await Itinerary.findById(req.params.itinerary_id)
+
+    if (!existingItinerary) {
+      return res.status(404).json({ message: "Itinerary not found" })
+    }
+
+    if (existingItinerary.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" })
+    }
+
+    const updatedData = {
+      ...req.body,
+      activities: req.body.activities || existingItinerary.activities,
+      itineraryText: JSON.stringify(req.body.activities) || existingItinerary.itineraryText
+    }
+
+    const updatedItinerary = await Itinerary.findByIdAndUpdate(
+      req.params.itinerary_id,
+      updatedData,
+      { new: true }
+    )
+
+    res.json(updatedItinerary)
+  } catch (error) {
+    console.error("Error updating itinerary:", error)
+    res.status(500).json({ message: "Server error" })
+  }
+}
+
 module.exports = {
   GetItineraries,
   GetUserItineraries,
@@ -254,4 +295,5 @@ module.exports = {
   DeleteItinerary,
   GenerateItinerary,
   SaveItinerary,
+  GetItineraryForEdit
 }

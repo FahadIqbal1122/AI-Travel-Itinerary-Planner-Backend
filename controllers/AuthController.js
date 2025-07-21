@@ -39,7 +39,6 @@ const Login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" })
     }
 
-    // Consistent _id usage in payload (changed from id)
     const payload = {
       _id: user._id,
       email: user.email,
@@ -49,7 +48,7 @@ const Login = async (req, res) => {
 
     res.json({
       user: {
-        _id: user._id, // Consistent _id in response
+        _id: user._id, 
         email: user.email,
         name: user.name,
       },

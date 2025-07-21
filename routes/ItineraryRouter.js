@@ -53,4 +53,11 @@ router.post(
   controller.SaveItinerary
 )
 
+router.post(
+  "/edit/:id",
+  middleware.stripToken,
+  middleware.verifyToken,
+  controller.GetItineraryForEdit
+)
+
 module.exports = router
