@@ -108,23 +108,44 @@ const DeleteItinerary = async (req, res) => {
 // generate itinerary using Google Generative AI
 const GenerateItinerary = async (req, res) => {
   try {
-    const { destination, startDate, endDate, preferences, isDraft } = req.body
+    const { destination, startDate, endDate, preferences, isDraft, prompt } = req.body
     const userId = req.user._id
 
-    // Validate required fields
+    // If this is a chat-based edit request
+    if (prompt) {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+      const result = await model.generateContent(prompt)
+      const response = result.response.text()
+      const cleaned = response.replace(/```json|```/g, "").trim()
+      
+      try {
+        const parsed = JSON.parse(cleaned)
+        return res.json({
+          status: "success",
+          draft: [parsed] // Wrap in array to match existing structure
+        })
+      } catch (e) {
+        // If JSON parsing fails, return as message
+        return res.json({
+          status: "success",
+          draft: [{
+            message: cleaned,
+            changes: null
+          }]
+        })
+      }
+    }
+
+    // Original itinerary generation logic
     if (!destination || !startDate || !endDate) {
       return res.status(400).json({ error: "Missing required fields" })
     }
 
-    // Date calculations
     const start = new Date(startDate)
     const end = new Date(endDate)
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
 
-    // AI Generation
-    const prompt = `As a travel expert, create a detailed ${days}-day itinerary for ${destination} starting ${startDate} with these preferences: ${preferences.join(
-      ", "
-    )}.
+    const itineraryPrompt = `As a travel expert, create a detailed ${days}-day itinerary for ${destination} starting ${startDate} with these preferences: ${preferences.join(", ")}.
 
 Requirements:
 1. TRIP DESCRIPTION (50-70 words): Overview highlighting key themes and experiences
@@ -151,13 +172,13 @@ JSON Format:
     }
   ]
 }`
+    
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-    const result = await model.generateContent(prompt)
+    const result = await model.generateContent(itineraryPrompt)
     const response = result.response.text()
     const cleaned = response.replace(/```json|```/g, "").trim()
     const { tripDescription, days: activities } = JSON.parse(cleaned)
 
-    // Return draft or save full itinerary
     if (isDraft) {
       return res.json({
         status: "draft",
@@ -173,7 +194,6 @@ JSON Format:
       })
     }
 
-    // Save to database
     const newItinerary = await Itinerary.create({
       userId,
       destination,
