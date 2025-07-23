@@ -16,7 +16,9 @@ router.get(
   controller.GetItineraryDetail
 )
 
-router.get("/", controller.GetItineraries)
+router.get("/",
+    middleware.stripToken,
+  middleware.verifyToken, controller.GetItineraries)
 
 router.post(
   "/",
